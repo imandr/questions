@@ -18,20 +18,20 @@ def createModel(row_size, nout):
     in2 = Input(shape=(None, row_size))
     in3 = Input(shape=(None, row_size))
     
-    lstm_a = LSTM(row_size, return_sequences=True)
+    lstm_a = LSTM(row_size, return_sequences=True, implementation=1,  name="lstm_a")
     lstm_a_1 = lstm_a(in1)
     lstm_a_2 = lstm_a(in2)
     
-    lstm_b = LSTM(row_size, return_sequences=False)
+    lstm_b = LSTM(row_size, return_sequences=False, implementation=1,  name="lstm_b")
     lstm_b_1 = lstm_b(lstm_a_1)
     lstm_b_2 = lstm_b(lstm_a_2)
     
-    lstm_c_1 = LSTM(row_size, return_sequences=True)(in3)
-    lstm_c_2 = LSTM(row_size, return_sequences=False)(lstm_c_1)
+    lstm_c_1 = LSTM(row_size, return_sequences=True, implementation=1, name="lstm_c_1")(in3)
+    lstm_c_2 = LSTM(row_size, return_sequences=False, implementation=1, name="lstm_c_2")(lstm_c_1)
 
     merged = concatenate([lstm_b_1, lstm_b_2, lstm_c_2])
-    dense = Dense(row_size)(merged)
-    out = Dense(nout, activation=Activation("softmax"))(dense)
+    #dense = Dense(row_size)(merged)
+    out = Dense(nout, activation=Activation("softmax"), name="output")(merged)
     model = Model(inputs=[in1, in2, in3], outputs=out)
     model.compile(loss='categorical_crossentropy', optimizer=Adadelta(), metrics=["accuracy"])
     return model
@@ -52,7 +52,7 @@ def run():
         
     os.system("rm logs/*")
     
-    bg = QuestionsBatchGenerator(args[0], 1000)
+    bg = QuestionsBatchGenerator(args[0], 200)
 
     trainig_set_size = bg.training_samples()
 
