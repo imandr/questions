@@ -1,0 +1,7 @@
+logs
+*.pyc
+*.bck
+.*
+
+!.gitignore
+
