@@ -12,8 +12,9 @@ train_df.fillna(" ", inplace=True)
 def normalize_question(q):
     q = q.lower()
     q = q.replace("?","")
-    q = q.replace(".","")
-    q = q.replace(",","")
+    q = q.replace("..."," . ")
+    q = q.replace(".."," . ")
+    q = q.replace("."," . ")
     q = q.replace(":"," : ")
     q = q.replace(","," , ")
     q = q.replace("/"," / ")
@@ -33,17 +34,17 @@ def normalize_question(q):
 
 print normalize_question(train_df["question1"][0])
 
-train_df["question1"] = map(normalize_question, train_df["question1"])
-train_df["question2"] = map(normalize_question, train_df["question2"])
+train_df["normalized1"] = map(normalize_question, train_df["question1"])
+train_df["normalized2"] = map(normalize_question, train_df["question2"])
 
 duplicates = train_df[train_df["is_duplicate"]==1]
-duplicate_words = " ".join(duplicates["question1"].tolist()) + " ".join(duplicates["question2"].tolist()) 
+duplicate_words = " ".join(duplicates["normalized1"].tolist()) + " ".join(duplicates["normalized2"].tolist()) 
 duplicate_words = duplicate_words.split(" ")
 dupcounts = Counter(duplicate_words)
 
 nonduplicates = train_df[train_df["is_duplicate"]==0]
-nonduplicate_words = " ".join(nonduplicates["question1"].tolist()) + \
-                    " ".join(nonduplicates["question2"].tolist()) 
+nonduplicate_words = " ".join(nonduplicates["normalized1"].tolist()) + \
+                    " ".join(nonduplicates["normalized2"].tolist()) 
 nonduplicate_words = nonduplicate_words.split(" ")
 nondupcounts = Counter(nonduplicate_words)
 
@@ -94,12 +95,12 @@ def encode_question(encoding, words):
 maxqid = max(max(train_df["qid1"]), max(train_df["qid2"]))
 
 questions_dict = dict(
-    [(qid, encode_question(encoding, q.split())) for i, qid, q in train_df[["qid1","question1"]].itertuples()]
+    [(qid, encode_question(encoding, q.split())) for i, qid, q in train_df[["qid1","normalized1"]].itertuples()]
 )
 
 questions_dict.update(
     dict(
-        [(qid, encode_question(encoding, q.split())) for i, qid, q in train_df[["qid2","question2"]].itertuples()]
+        [(qid, encode_question(encoding, q.split())) for i, qid, q in train_df[["qid2","normalized2"]].itertuples()]
     )
 )
 
