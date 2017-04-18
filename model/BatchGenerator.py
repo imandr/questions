@@ -22,6 +22,7 @@ class QuestionsBatchGenerator:
         self.ResetNeeded = False
         self.Store = pd.HDFStore(data_file)
         self.QuestionsDF = self.Store["questions"]
+        self.OriginalDF = self.Store["original"]
         pairs_df = self.Store["pairs"]
         inx = range(len(pairs_df))
         random.shuffle(inx)
@@ -47,12 +48,15 @@ class QuestionsBatchGenerator:
             q = out
         return q
                 
-    def loadPair(self, qid1, qid2, l):
-        q1 = self.QuestionsDF.loc[qid1][0]
-        q2 = self.QuestionsDF.loc[qid2][0]
-        q1 = self.pad(q1, l)
-        q2 = self.pad(q2, l)
-        return q1, q2
+    def loadPair(self, i):
+        x, y = self.slice([i])
+        original = self.OriginalDF.loc[i]
+        q1 = original.question1
+        q2 = original.question2
+        dup = original.is_duplicate
+        return x, (q1, q2, dup)
+        
+        
     
     def batch(self, bsize, increment=True, max_samples=None):
         b = self.slice(self.TrainInx[self.I:self.I+bsize])
@@ -95,16 +99,16 @@ class QuestionsBatchGenerator:
             q1 = self.QuestionsDF.loc[qids1[i]][0]
             l1 = len(q1)
             x1[i,-l1:,:] = q1
-            x3[i,-l1:,:] = q1
+            #x3[i,-l1:,:] = q1
 
             q2 = self.QuestionsDF.loc[qids2[i]][0]
             l2 = len(q2)
             x2[i,-l2:,:] = q2
-            x3[i,-l1-l2:-l1,:] = q2
+            #x3[i,-l1-l2:-l1,:] = q2
 
             dup = duplicate[i]
             y[i, dup] = 1.0
-        return [x1, x2, x3], [y]
+        return [x1, x2], [y]
 
     def batches(self, bsize, randomize = False, max_samples = None):
         if randomize:

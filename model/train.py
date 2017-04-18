@@ -1,19 +1,10 @@
 import time, random
 import numpy as np
 
-from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Input, concatenate
-from keras.optimizers import Adadelta
-from keras.layers.core import Flatten, Permute, Reshape, Lambda, Dropout
-from keras.layers.recurrent import LSTM
 from keras.callbacks import TensorBoard, ProgbarLogger, ModelCheckpoint
-import keras.backend as K
-from keras import regularizers
-
-from model import createModel
 
 from BatchGenerator import QuestionsBatchGenerator
-
+from model import createModel
     
 def run():
 
