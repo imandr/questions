@@ -1,20 +1,9 @@
 import time, random
 import numpy as np
 
-"""
-from keras.models import Sequential, Model
-from keras.layers import Dense, Activation, Input, concatenate
-from keras.optimizers import Adadelta
-from keras.layers.core import Flatten, Permute, Reshape, Lambda, Dropout
-from keras.layers.recurrent import LSTM
-import keras.backend as K
-from keras import regularizers
-"""
-
 from keras.callbacks import TensorBoard, ProgbarLogger, ModelCheckpoint
 
 from BatchGenerator import QuestionsBatchGenerator
-
 from model import createModel
     
 def run():
@@ -42,6 +31,12 @@ def run():
 
     model = createModel(bg.rowSize, 2)
     
+    if load_from:
+        model.load_weights(load_from)
+        print
+        print "model weights loaded from %s" % (load_from,)
+        print 
+        
     tb = TensorBoard(write_images = False, histogram_freq=1.0)
     callbacks = [tb]
     if save_to:

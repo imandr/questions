@@ -66,6 +66,17 @@ class QuestionsBatchGenerator:
     def validateSet(self):
         return self.slice(self.ValidateInx)
         
+    def loadPair(self, i):
+        pair = self.Store["original"].loc[i]
+        qid1 = pair.qid1
+        qid2 = pair.qid2
+        duplicate = pair.is_duplicate != 0
+        q1 = pair.question1
+        q2 = pair.question2
+        
+        x, y = self.slice([i])
+        return x, (q1, q2, duplicate)
+        
     def slice(self, inx):
         pairs = self.PairsDF.loc[inx]
         n = len(pairs)
