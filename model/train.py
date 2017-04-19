@@ -13,11 +13,15 @@ def run():
     load_from = None
 
     batch_size = 30
+    nworkers = 2
+    verbose = 1
 
-    opts, args = getopt.getopt(sys.argv[1:], "s:l:")
+    opts, args = getopt.getopt(sys.argv[1:], "s:l:n:q")
     for opt, val in opts:
         if opt == "-s": save_to = val
         if opt == "-l": load_from = val
+        if opt == "-n": nworkers = int(val)
+        if opt == "-q": verbose = 0
         
     os.system("rm logs/*")
     
@@ -43,7 +47,7 @@ def run():
 	callbacks.append(ModelCheckpoint(filepath=save_to, verbose=1, save_best_only=True, save_weights_only = True, monitor="val_loss"))
     
     model.fit_generator(bg.batches_guargded(batch_size), int(trainig_set_size/batch_size/20),
-            epochs=1000, workers=4, callbacks=callbacks, validation_data=validation_data)
+            epochs=1000, verbose=verbose, workers=nworkers, callbacks=callbacks, validation_data=validation_data)
 
 run()
     
