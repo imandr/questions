@@ -81,7 +81,7 @@ class QuestionsBatchGenerator:
         
         x1 = np.zeros((n, L, self.rowSize), self.DType)
         x2 = np.zeros((n, L, self.rowSize), self.DType)
-        x3 = np.zeros((n, L*2, self.rowSize), self.DType)
+        x3 = np.zeros((n, L, self.rowSize*2), self.DType)
         y = np.zeros((n, 2))
         for i in xrange(n):
             #print qids1[i]
@@ -93,11 +93,16 @@ class QuestionsBatchGenerator:
             q2 = self.QuestionsDF.loc[qids2[i]][0]
             l2 = len(q2)
             x2[i,-l2:,:] = q2
-            #x3[i,-l1-l2:-l1,:] = q2
+            
+            l12 = max(l1, l2)
+            
+            #print l1, l2, l12
+            x3[i,L-l12:L-l12+l1,:self.rowSize] = q1
+            x3[i,L-l12:L-l12+l2,self.rowSize:] = q2
 
             dup = duplicate[i]
             y[i, dup] = 1.0
-        return [x1, x2], [y]
+        return [x1, x2, x3], [y]
 
     def batches(self, bsize, randomize = False, max_samples = None):
         if randomize:

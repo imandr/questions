@@ -32,7 +32,7 @@ def run():
         
     os.system("rm logs/*")
     
-    bg = QuestionsBatchGenerator(args[0], 1000)
+    bg = QuestionsBatchGenerator(args[0], 500)
 
     trainig_set_size = bg.training_samples()
 
@@ -47,7 +47,7 @@ def run():
     if save_to:
 	callbacks.append(ModelCheckpoint(filepath=save_to, verbose=1, save_best_only=True, save_weights_only = True, monitor="val_loss"))
     
-    model.fit_generator(bg.batches_guargded(batch_size), int(trainig_set_size/batch_size/100),
+    model.fit_generator(bg.batches_guargded(batch_size), int(trainig_set_size/batch_size/20),
             epochs=1000, workers=4, callbacks=callbacks, validation_data=validation_data)
 
 run()
