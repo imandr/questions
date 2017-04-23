@@ -22,34 +22,26 @@ def createModel(row_size, nout):
     
     in1 = Input(shape=(None, row_size))
     in2 = Input(shape=(None, row_size))
-    in3 = Input(shape=(None, row_size*2))
     
     lstm_a = LSTM(inner, return_sequences=True, implementation=1,  name="lstm_a")
     lstm_a_1 = lstm_a(in1)
     lstm_a_2 = lstm_a(in2)
+    
+    lstm_b = LSTM(inner, return_sequences=True, implementation=1,  name="lstm_b")
+    
+    merge_a_1 = concatenate([lstm_a_1, lstm_a_2], name="merge_a_1")
+    merge_a_2 = concatenate([lstm_a_2, lstm_a_1], name="merge_a_2")
 
-    last_a_1 = Lambda(last, name="last_a_1")(lstm_a_1)
-    last_a_2 = Lambda(last, name="last_a_2")(lstm_a_2)
+    lstm_b_1 = lstm_b(merge_a_1)
+    lstm_b_2 = lstm_b(merge_a_2)
     
-    lstm_b = LSTM(inner, return_sequences=False, implementation=1,  name="lstm_b")
-    lstm_b_1 = lstm_b(lstm_a_1)
-    lstm_b_2 = lstm_b(lstm_a_2)
+    merge_c = concatenate([lstm_b_1, lstm_b_2], name="merge_c")
     
-    merge = Dense(inner, name="merge_dense", activation="tanh")
+    lstm_c = LSTM(inner, return_sequences=False, implementation=1,  name="lstm_c")(merge_c)
     
-    merge_1 = merge(concatenate([last_a_1, lstm_b_1], name="merge_1"))
-    merge_2 = merge(concatenate([last_a_2, lstm_b_2], name="merge_2"))
-    
-    lstm_a_3 = LSTM(inner, return_sequences=True, implementation=1,  name="lstm_a_3")(in3)
-    lstm_b_3 = LSTM(inner, return_sequences=False, implementation=1,  name="lstm_b_3")(lstm_a_3)
-    last_a_3 = Lambda(last, name="last_a_3")(lstm_a_3)
-
-    merge_3 = merge(concatenate([last_a_3, lstm_b_3], name="merge_3"))
-    
-    merged = concatenate([merge_1, merge_2, merge_3], name="merge_123")
-    dense = Dense(nout*10, activation="tanh", name="dense_123")(merged)
+    dense = Dense(nout*10, activation="tanh", name="dense_c")(lstm_c)
     out = Dense(nout, activation=Activation("softmax"), name="output")(dense)
-    model = Model(inputs=[in1, in2, in3], outputs=out)
+    model = Model(inputs=[in1, in2], outputs=out)
     model.compile(loss='categorical_crossentropy', optimizer=Adadelta(), metrics=["accuracy"])
     return model
 

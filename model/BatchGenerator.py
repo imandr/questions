@@ -21,18 +21,15 @@ class QuestionsBatchGenerator:
         self.I = 0
         self.ResetNeeded = False
         self.Store = pd.HDFStore(data_file)
-        self.QuestionsDF = self.Store["questions"]
-        self.OriginalDF = self.Store["original"]
-        pairs_df = self.Store["pairs"]
-        inx = range(len(pairs_df))
+        self.PairsDF = self.Store["train"]
+        inx = range(len(self.PairsDF))
         random.shuffle(inx)
         self.ValidateInx = inx[:validate_size]
         self.TrainInx = inx[validate_size:]
-        self.PairsDF = pairs_df
-        sample_q = self.QuestionsDF.loc[1,"encoded_question"]
+        sample_q = self.PairsDF.loc[1,"q1"]
         self.RowSize = sample_q.shape[1]
         self.DType = sample_q.dtype
-        print self.RowSize, self.DType
+        print "Row size=", self.RowSize, "    dtype=", self.DType
 
     @property
     def rowSize(self):
@@ -41,23 +38,6 @@ class QuestionsBatchGenerator:
     def training_samples(self):
         return len(self.TrainInx)
         
-    def pad(self, q, l):
-        if len(q) < l:
-            out = np.zeros((l, q.shape[1]), dtype=q.dtype)
-            out[:len(q)] = q
-            q = out
-        return q
-                
-    def loadPair(self, i):
-        x, y = self.slice([i])
-        original = self.OriginalDF.loc[i]
-        q1 = original.question1
-        q2 = original.question2
-        dup = original.is_duplicate
-        return x, (q1, q2, dup)
-        
-        
-    
     def batch(self, bsize, increment=True, max_samples=None):
         b = self.slice(self.TrainInx[self.I:self.I+bsize])
         if increment:   self.I += bsize
@@ -66,54 +46,31 @@ class QuestionsBatchGenerator:
     def validateSet(self):
         return self.slice(self.ValidateInx)
         
-    def loadPair(self, i):
-        pair = self.Store["original"].loc[i]
-        qid1 = pair.qid1
-        qid2 = pair.qid2
-        duplicate = pair.is_duplicate != 0
-        q1 = pair.question1
-        q2 = pair.question2
-        
-        x, y = self.slice([i])
-        return x, (q1, q2, duplicate)
-        
     def slice(self, inx):
         pairs = self.PairsDF.loc[inx]
         n = len(pairs)
         if n == 0:   return None
-        qids1 = pairs["qid1"].tolist()
-        qids2 = pairs["qid2"].tolist()
-        duplicate = pairs["is_duplicate"].tolist()
-        qids = set(qids1 + qids2)
         
-        L = max((x.shape[0] for x in self.QuestionsDF["encoded_question"][qids]))
+        L = max(
+                [max(len(q1), len(q2)) for _, q1, q2 in pairs[["q1", "q2"]].itertuples()]
+                )
         
         #print L
         
         x1 = np.zeros((n, L, self.rowSize), self.DType)
         x2 = np.zeros((n, L, self.rowSize), self.DType)
-        x3 = np.zeros((n, L, self.rowSize*2), self.DType)
         y = np.zeros((n, 2))
-        for i in xrange(n):
+        for i, (_, q1, q2, dup) in enumerate(pairs.itertuples()):
             #print qids1[i]
-            q1 = self.QuestionsDF.loc[qids1[i]][0]
             l1 = len(q1)
             x1[i,-l1:,:] = q1
             #x3[i,-l1:,:] = q1
 
-            q2 = self.QuestionsDF.loc[qids2[i]][0]
             l2 = len(q2)
             x2[i,-l2:,:] = q2
             
-            l12 = max(l1, l2)
-            
-            #print l1, l2, l12
-            x3[i,L-l12:L-l12+l1,:self.rowSize] = q1
-            x3[i,L-l12:L-l12+l2,self.rowSize:] = q2
-
-            dup = duplicate[i]
             y[i, dup] = 1.0
-        return [x1, x2, x3], [y]
+        return [x1, x2], [y]
 
     def batches(self, bsize, randomize = False, max_samples = None):
         if randomize:
@@ -148,10 +105,9 @@ if __name__ == "__main__":
     bg = QuestionsBatchGenerator(sys.argv[1], 1000)
 
     i = 0
-    for (x1, x2, x3), y in bg.batches(5):
+    for (x1, x2), y in bg.batches(5):
         print x1.shape, x1[0]
         print x2.shape, x2[0]
-        print x3.shape, x3[0]
         print y[0]
         i += 1
         if i > 0:   break

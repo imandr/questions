@@ -26,7 +26,7 @@ def run():
     #print validation_data
 
     model = createModel(bg.rowSize, 2)
-    model.load_weights(load_from)
+    if load_from:   model.load_weights(load_from)
     
     for i in range(100):
         pair_x, pair_truth = bg.loadPair(i)

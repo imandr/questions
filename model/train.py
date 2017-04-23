@@ -16,16 +16,19 @@ def run():
     nworkers = 2
     verbose = 1
 
-    opts, args = getopt.getopt(sys.argv[1:], "s:l:n:q")
+    opts, args = getopt.getopt(sys.argv[1:], "s:l:n:qw:")
     for opt, val in opts:
         if opt == "-s": save_to = val
         if opt == "-l": load_from = val
+        if opt == "-w": 
+            load_from = val
+            save_to = val
         if opt == "-n": nworkers = int(val)
         if opt == "-q": verbose = 0
         
     os.system("rm logs/*")
     
-    bg = QuestionsBatchGenerator(args[0], 500)
+    bg = QuestionsBatchGenerator(args[0], 1000)
 
     trainig_set_size = bg.training_samples()
 
