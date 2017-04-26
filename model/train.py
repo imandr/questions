@@ -4,7 +4,7 @@ import numpy as np
 from keras.callbacks import TensorBoard, ProgbarLogger, ModelCheckpoint
 
 from BatchGenerator import QuestionsBatchGenerator
-from model import createModel
+from model_extra_layer import createModel
     
 def run():
 
@@ -39,7 +39,7 @@ def run():
     model = createModel(bg.rowSize, 2)
     
     if load_from:
-        model.load_weights(load_from)
+        model.load_weights(load_from, by_name=True)
         print
         print "model weights loaded from %s" % (load_from,)
         print 

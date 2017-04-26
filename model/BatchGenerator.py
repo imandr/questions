@@ -20,6 +20,7 @@ class QuestionsBatchGenerator:
     def __init__(self, data_file, validate_size):
         self.I = 0
         self.ResetNeeded = False
+        print "data file: %s" % (data_file,)
         self.Store = pd.HDFStore(data_file)
         self.PairsDF = self.Store["train"]
         inx = range(len(self.PairsDF))
