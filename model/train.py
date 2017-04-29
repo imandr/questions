@@ -4,7 +4,7 @@ import numpy as np
 from keras.callbacks import TensorBoard, ProgbarLogger, ModelCheckpoint
 
 from BatchGenerator import QuestionsBatchGenerator
-from model_extra_layer import createModel
+from model import createModel
     
 def run():
 
@@ -12,7 +12,7 @@ def run():
     save_to = None
     load_from = None
 
-    batch_size = 30
+    batch_size = 60
     nworkers = 2
     verbose = 1
 
@@ -29,6 +29,8 @@ def run():
     os.system("rm logs/*")
     
     bg = QuestionsBatchGenerator(args[0], 1000)
+    
+    print "Row size=", bg.rowSize
 
     trainig_set_size = bg.training_samples()
 
@@ -50,7 +52,9 @@ def run():
 	callbacks.append(ModelCheckpoint(filepath=save_to, verbose=1, save_best_only=True, save_weights_only = True, monitor="val_loss"))
     
     model.fit_generator(bg.batches_guargded(batch_size), int(trainig_set_size/batch_size/20),
-            epochs=1000, verbose=verbose, workers=nworkers, callbacks=callbacks, validation_data=validation_data)
+            epochs=1000, verbose=verbose, 
+            workers=nworkers,
+            callbacks=callbacks, validation_data=validation_data)
 
 run()
     

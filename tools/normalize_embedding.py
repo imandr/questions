@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-import sys, math
+import sys, math, random
 from collections import Counter
 
 Usage = "python normalize_for_test.py <train_file.csv> <test_file.csv> <train_out.hd5> <test_out.hd5>"
@@ -51,36 +51,63 @@ train_questions = map(normalize_question, train_df["question1"].tolist() + train
 
 all_questions = set(test_questions+train_questions)
 all_frequencies = word_frequencies(all_questions)
+#all_words = [w for w, n in all_frequencies]
 
-VocabularySize = 5000
+VocabularySize = 5500
 
 encoding = { w:i+1 for i, (w, n) in enumerate(all_frequencies[:VocabularySize]) }
 
 MaxLen = 100
 
 def encode_pair(q1, q2):
-    words1 = [encoding[w] for w in normalize_question(q1).split()[:MaxLen]]
-    words2 = [encoding[w] for w in normalize_question(q2).split()[:MaxLen]]
+    words1 = [encoding.get(w, VocabularySize-1) for w in normalize_question(q1).split()[:MaxLen]]
+    words2 = [encoding.get(w, VocabularySize-1) for w in normalize_question(q2).split()[:MaxLen]]
     l1 = len(words1)
     l2 = len(words2)
     l = max(l1, l2)
     n1 = l-l1
     n2 = l-l2
-    words1 = np.array([0]*n1 + [encoding[w] for w in normalize_question(q1).split()[:MaxLen]], dtype=np.int32)
-    words2 = np.array([0]*n2 + [encoding[w] for w in normalize_question(q2).split()[:MaxLen]], dtype=np.int32)
+    words1 = np.array([0]*n1 + words1, dtype=np.int32)
+    words2 = np.array([0]*n2 + words2, dtype=np.int32)
     return words1, words2
-
     
-
-train_data = [
+def encode_question(q):
+    return np.array([encoding.get(w, VocabularySize-1) for w in normalize_question(q).split()[:MaxLen]], dtype=np.int32)
+    
+def permute_encoded_question(q, vocabulary_size):
+    if len(q) <= 0: return q
+    q = q.copy()
+    if random.random() < 0.5:
+        random.shuffle(q)
+    else:
+        n = len(q)
+        m = max(1, n/5)
+        for i in random.sample(range(n), m):
+            q[i] = random.randint(0, vocabulary_size-1)
+    return q
+        
+pairs_encoded = [
     encode_pair(q1, q2)+(is_dup,)
     for i, id, qid1, qid2, q1, q2, is_dup in train_df.itertuples()
 ]
 
-train_encoded = pd.DataFrame(train_data, columns=["q1","q2","dup"])
+questions_encoded = [
+    (encode_question(q),1) for q in all_questions
+]
+
+questions_encoded = questions_encoded + [(permute_encoded_question(q, VocabularySize), 0) for q, v in questions_encoded]
+random.shuffle(questions_encoded)
+
+pairs_encoded = pd.DataFrame(pairs_encoded, columns=["q1","q2","dup"])
 train_store = pd.HDFStore(sys.argv[3])
-train_store["train"] = train_encoded
+train_store["pairs"] = pairs_encoded
+train_store["questions"] = pd.DataFrame(questions_encoded, columns=["q", "valid"])
 train_store["original"] = train_df[["question1","question2"]]
+
+words = pd.Series([w for (w, n) in enumerate(all_frequencies[:VocabularySize])])
+encoding_df = pd.DataFrame(index=range(1, VocabularySize+1))
+encoding_df["word"] = words
+train_store["encoding"] = encoding_df
 train_store.close()
 
 print "encoded dataframe is ready"

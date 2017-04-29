@@ -17,8 +17,7 @@ def last(x):
 
 def createModel(row_size, nout):
     
-    inner = int(row_size * 1.5)
-    inner = row_size
+    inner = int(row_size * 2)
     
     in1 = Input(shape=(None, row_size))
     in2 = Input(shape=(None, row_size))
