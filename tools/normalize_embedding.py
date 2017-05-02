@@ -53,7 +53,7 @@ all_questions = set(test_questions+train_questions)
 all_frequencies = word_frequencies(all_questions)
 #all_words = [w for w, n in all_frequencies]
 
-VocabularySize = 5500
+VocabularySize = 6000
 
 encoding = { w:i+1 for i, (w, n) in enumerate(all_frequencies[:VocabularySize]) }
 
@@ -102,7 +102,7 @@ pairs_encoded = pd.DataFrame(pairs_encoded, columns=["q1","q2","dup"])
 train_store = pd.HDFStore(sys.argv[3])
 train_store["pairs"] = pairs_encoded
 train_store["questions"] = pd.DataFrame(questions_encoded, columns=["q", "valid"])
-train_store["original"] = train_df[["question1","question2"]]
+train_store["original"] = train_df[["question1","question2","is_duplicate"]]
 
 words = pd.Series([w for (w, n) in enumerate(all_frequencies[:VocabularySize])])
 encoding_df = pd.DataFrame(index=range(1, VocabularySize+1))
