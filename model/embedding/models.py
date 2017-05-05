@@ -43,14 +43,12 @@ def createModelPairs():
     words_plus_match_1 = concatenate([words_1, match1], name="words_plus_match_1")
     words_plus_match_2 = concatenate([words_2, match2], name="words_plus_match_2")
     
-    lstm_a = LSTM(InnerSize, return_sequences=True, implementation=1,  name="lstm_a")
+    signature = LSTM(InnerSize*2, return_sequences=False, implementation=1,  name="signature_xwide")
     
-    lstm_a_1 = lstm_a(concatenate([words_plus_match_1, words_plus_match_2]))
-    lstm_a_2 = lstm_a(concatenate([words_plus_match_2, words_plus_match_1]))
+    signature_1 = signature(words_plus_match_1)
+    signature_2 = signature(words_plus_match_2)
     
-    lstm_b = LSTM(InnerSize, return_sequences=False, implementation=1,  name="lstm_b")(concatenate([lstm_a_1, lstm_a_2]))
-    
-    out = Dense(OutSize, activation="softmax", name="output")(lstm_b)
+    out = Dense(OutSize, activation="softmax", name="output_xwide")(concatenate([signature_1, signature_2]))
     
     model = Model(inputs=[q1, match1, q2, match2], outputs=out)
     model.compile(loss='categorical_crossentropy', optimizer=Adadelta(), metrics=["accuracy"])
